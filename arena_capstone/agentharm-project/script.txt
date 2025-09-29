@@ -1,0 +1,18 @@
+
+set-up the environment
+--
+
+pip install inspect-ai
+pip install git+https://github.com/UKGovernmentBEIS/inspect_evals
+
+
+command line to run eval on validation dataset
+--
+inspect eval inspect_evals/agentharm \
+  --model openai/gpt-4o-mini \
+  -T split=val
+
+
+view
+--
+inspect views
