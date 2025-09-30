@@ -31,6 +31,10 @@ General methodology
 
             We use the same jailbreak template across models, and our main results consider the average success rate of that template given a single attempt.
 
+            systematically categorize these jailbreaks based on two main criteria: 
+            (1) competing objectives, which occurs when a model’s capabilities conflict with safety goals, and 
+            (2) mismatched generalization, which arises when safety training does not generalize to domains where the model has capabilities. 
+
 
 
 ---

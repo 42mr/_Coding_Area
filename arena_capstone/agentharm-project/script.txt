@@ -5,6 +5,11 @@ set-up the environment
 pip install inspect-ai
 pip install git+https://github.com/UKGovernmentBEIS/inspect_evals
 
+pip install deepl
+
+Add to your .env file: DEEPL_API_KEY=your-deepl-api-key-here
+
+
 
 command line to run eval on validation dataset
 --
