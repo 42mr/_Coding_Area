@@ -47,13 +47,29 @@ def get_client():
 
 # --------------------------- SYSTEM PROMPTS -----------------------------
 
-def load_system_prompts(filepath='system_prompts_all.json'):
-    """Load all system prompts from JSON file."""
+def load_system_prompts(filepath='./prompt_data/system_prompts_all.json', prompt_type='system_prompt'):
+    """Load all system prompts from JSON file.
+    
+    Args:
+        filepath: Path to system prompts JSON file
+        prompt_type: Which prompt variant to use (e.g., 'system_prompt', 'system_prompt_Chain_of_Thought', 
+                     'system_prompt_ReAct', 'system_prompt_Refusal')
+    """
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
+        # Check if the requested prompt type exists
+        if prompt_type not in data:
+            available = [k for k in data.keys() if k.startswith('system_prompt')]
+            raise SystemExit(
+                f"Prompt type '{prompt_type}' not found in {filepath}.\n"
+                f"Available types: {', '.join(available)}"
+            )
+        
+        # Extract text for each language from the selected prompt type
         return {lang: prompt_data['text'] 
-                for lang, prompt_data in data['system_prompts'].items()}
+                for lang, prompt_data in data[prompt_type].items()}
     except FileNotFoundError:
         raise SystemExit(f"System prompts file not found: {filepath}")
     except (KeyError, json.JSONDecodeError) as e:
@@ -172,11 +188,14 @@ def main():
     ap = argparse.ArgumentParser(
         description="Evaluate translated prompts for refusal across languages using an LLM semantic judge (AgentHarm-style)."
     )
-    ap.add_argument("--gen-model", default="gpt-4o", help="Model to answer prompts (default: gpt-4o-mini)")
+    ap.add_argument("--gen-model", default="gpt-4o", help="Model to answer prompts (default: gpt-4o)")
     ap.add_argument("--judge-model", default="gpt-4o-mini", help="Model to judge refusals (default: gpt-4o-mini)")
-    ap.add_argument("--dir", default=".", help="Directory containing validation_prompts_{lang}.json files")
-    ap.add_argument("--system-prompts", default="system_prompts_all.json", 
+    ap.add_argument("--dir", default="./prompt_data", help="Directory containing validation_prompts_{lang}.json files")
+    ap.add_argument("--system-prompts", default="./prompt_data/system_prompts_all.json", 
                     help="JSON file containing system prompts for all languages")
+    ap.add_argument("--prompt-type", default="system_prompt",
+                    choices=['system_prompt', 'system_prompt_Chain_of_Thought', 'system_prompt_ReAct', 'system_prompt_Refusal'],
+                    help="Which system prompt variant to use")
     ap.add_argument("--sleep", type=float, default=0.5, help="Sleep seconds between prompt evaluations")
     ap.add_argument("--no-generate", action="store_true",
                     help="Skip generation and only run the refusal judge on the existing 'response_preview' if present")
@@ -186,8 +205,8 @@ def main():
     client = get_client()
 
     # Load system prompts for all languages
-    system_prompts = load_system_prompts(args.system_prompts)
-    print(f"Loaded system prompts for {len(system_prompts)} languages from {args.system_prompts}")
+    system_prompts = load_system_prompts(args.system_prompts, args.prompt_type)
+    print(f"Loaded system prompts ({args.prompt_type}) for {len(system_prompts)} languages from {args.system_prompts}")
 
     # Timestamp suffix for outputs
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -208,7 +227,7 @@ def main():
     print("=" * 70)
     print(f"Languages: {total_languages}")
     print(f"Detected total evaluations: {total_evaluations}")
-    print(f"System prompts: {args.system_prompts}")
+    print(f"System prompt type: {args.prompt_type}")
     print("=" * 70, "\n")
 
     all_results = {}
@@ -315,6 +334,7 @@ def main():
                         "category": prompt_data.get("category"),
                         "language": lang_code,
                         "language_name": lang_name,
+                        "system_prompt_type": args.prompt_type,
                         "system_prompt": system_prompt,
                         "prompt": prompt_text,
                         "response_length": len(answer_text or ""),
@@ -337,6 +357,7 @@ def main():
                         "category": prompt_data.get("category"),
                         "language": lang_code,
                         "language_name": lang_name,
+                        "system_prompt_type": args.prompt_type,
                         "system_prompt": system_prompt,
                         "prompt": prompt_text,
                         "response_length": len(answer_text or ""),
@@ -359,6 +380,7 @@ def main():
                     "category": prompt_data.get("category"),
                     "language": lang_code,
                     "language_name": lang_name,
+                    "system_prompt_type": args.prompt_type,
                     "system_prompt": system_prompt,
                     "prompt": prompt_text,
                     "refused": None,
@@ -408,6 +430,7 @@ def main():
         # Store results
         all_results[lang_code] = {
             "language_name": lang_name,
+            "system_prompt_type": args.prompt_type,
             "system_prompt": system_prompt,
             "summary": {
                 "total": total,
@@ -494,7 +517,9 @@ def main():
     print(f"TOTAL tokens: {total_gen_prompt + total_gen_completion + total_judge_prompt + total_judge_completion:,}")
     print("=" * 70)
     print("Evaluation complete!")
-    print("\nNote: System prompts were prepended in the target language for each evaluation.")
+    print(f"\nNote: Used '{args.prompt_type}' system prompts in target languages for each evaluation.")
 
 if __name__ == "__main__":
     main()
+    
+    

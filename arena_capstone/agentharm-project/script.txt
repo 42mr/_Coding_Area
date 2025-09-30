@@ -21,3 +21,20 @@ inspect eval inspect_evals/agentharm \
 view
 --
 inspect views
+
+
+eval_transl_for_refusal_using_llmjudge_WSP.py
+
+  # Run with default system prompt
+  python eval_transl_for_refusal_using_llmjudge_WSP.py
+
+  # Run with Chain of Thought prompt
+  python eval_transl_for_refusal_using_llmjudge_WSP.py --prompt-type system_prompt_Chain_of_Thought
+
+  # Run with ReAct prompt
+  python eval_transl_for_refusal_using_llmjudge_WSP.py --prompt-type system_prompt_ReAct
+
+  # Run with Refusal-focused prompt
+  python eval_transl_for_refusal_using_llmjudge_WSP.py --prompt-type system_prompt_Refusal
+
+
