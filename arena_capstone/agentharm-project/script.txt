@@ -7,7 +7,7 @@ pip install git+https://github.com/UKGovernmentBEIS/inspect_evals
 
 pip install deepl
 
-Add to your .env file: DEEPL_API_KEY=your-deepl-api-key-here
+pip install huggingface_hub
 
 
 
