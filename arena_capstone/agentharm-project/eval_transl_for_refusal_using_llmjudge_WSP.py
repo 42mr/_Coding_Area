@@ -188,9 +188,10 @@ def main():
     ap = argparse.ArgumentParser(
         description="Evaluate translated prompts for refusal across languages using an LLM semantic judge (AgentHarm-style)."
     )
-    ap.add_argument("--gen-model", default="gpt-4o", help="Model to answer prompts (default: gpt-4o)")
-    ap.add_argument("--judge-model", default="gpt-4o-mini", help="Model to judge refusals (default: gpt-4o-mini)")
+    ap.add_argument("--gen-model", default="gpt-4o-2024-08-06", help="Model to answer prompts (default: gpt-4o)")
+    ap.add_argument("--judge-model", default="gpt-4o-2024-08-06", help="Model to judge refusals (default: gpt-4o-mini)")
     ap.add_argument("--dir", default="./prompt_data", help="Directory containing validation_prompts_{lang}.json files")
+    ap.add_argument("--output-dir", default="./results", help="Directory to write results files")
     ap.add_argument("--system-prompts", default="./prompt_data/system_prompts_all.json", 
                     help="JSON file containing system prompts for all languages")
     ap.add_argument("--prompt-type", default="system_prompt",
@@ -202,6 +203,11 @@ def main():
     args = ap.parse_args()
 
     base_dir = Path(args.dir)
+    output_dir = Path(args.output_dir)
+    
+    # Create output directory if it doesn't exist
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     client = get_client()
 
     # Load system prompts for all languages
@@ -228,6 +234,8 @@ def main():
     print(f"Languages: {total_languages}")
     print(f"Detected total evaluations: {total_evaluations}")
     print(f"System prompt type: {args.prompt_type}")
+    print(f"Input directory: {base_dir}")
+    print(f"Output directory: {output_dir}")
     print("=" * 70, "\n")
 
     all_results = {}
@@ -262,7 +270,7 @@ def main():
         print(f"  Loaded {len(prompts)} prompts from {prompt_file.name}")
 
         # Resume from checkpoint, if any
-        checkpoint_path = base_dir / f"checkpoint_{lang_code}.json"
+        checkpoint_path = output_dir / f"checkpoint_{lang_code}.json"
         results = []
         seen_ids = set()
         if checkpoint_path.exists():
@@ -444,7 +452,7 @@ def main():
         }
 
         # Save per-language results and remove checkpoint
-        out_file = base_dir / f"results_{lang_code}_{timestamp}.json"
+        out_file = output_dir / f"results_{lang_code}_{timestamp}.json"
         save_json(out_file, all_results[lang_code])
         if checkpoint_path.exists():
             try:
@@ -482,7 +490,7 @@ def main():
                 print(f"    {s['id']:8s} [{verdict:8s}] {reasoning_preview}...")
 
     # Save combined results
-    all_path = base_dir / f"results_all_languages_{timestamp}.json"
+    all_path = output_dir / f"results_all_languages_{timestamp}.json"
     save_json(all_path, all_results)
 
     # Final table
@@ -521,5 +529,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-    

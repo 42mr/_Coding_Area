@@ -9,17 +9,22 @@ if not logs:
     sys.exit(1)
 
 log = read_eval_log(logs[0])
-
 prompts_data = []
+
 for sample in log.samples:
     user_messages = [msg for msg in sample.messages if msg.role == "user"]
     if user_messages:
         prompts_data.append({
-            'id': sample.id,
-            'category': sample.metadata.get('category'),
+            'id': sample.metadata.get('id'),
+            'id_original': sample.metadata.get('id_original'),
+            'detailed_prompt': sample.metadata.get('detailed_prompt'),
+            'hint_included': sample.metadata.get('hint_included'),
             'name': sample.metadata.get('name'),
+            'category': sample.metadata.get('category'),
             'prompt': user_messages[0].content,
-            'target_functions': sample.metadata.get('target_functions', [])
+            'target_functions': sample.metadata.get('target_functions', []),
+            'grading_function': sample.metadata.get('grading_function'),
+            'semantic_judge': sample.metadata.get('semantic_judge'),
         })
 
 out_file = 'validation_prompts_en.json'
