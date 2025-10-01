@@ -4,24 +4,8 @@ set-up the environment
 
 pip install inspect-ai
 pip install git+https://github.com/UKGovernmentBEIS/inspect_evals
-
 pip install deepl
-
 pip install huggingface_hub
-
-
-
-command line to run eval on validation dataset
---
-inspect eval inspect_evals/agentharm \
-  --model openai/gpt-4o-mini \
-  -T split=val
-
-
-view
---
-inspect views
-
 
 eval_transl_for_refusal_using_llmjudge_WSP.py
 
@@ -37,4 +21,79 @@ eval_transl_for_refusal_using_llmjudge_WSP.py
   # Run with Refusal-focused prompt
   python eval_transl_for_refusal_using_llmjudge_WSP.py --prompt-type system_prompt_Refusal
 
+
+command line to run eval on validation dataset
+--
+inspect eval inspect_evals/agentharm --model openai/gpt-4o-2024-08-06 -T split=val
+inspect eval inspect_evals/agentharm --model openai/gpt-4o-2024-08-06 -T split=test
+
+inspect eval inspect_evals/agentharm \
+     --model openai/gpt-4o-2024-08-06 \
+     -T split=test_public \
+     --limit 10
+
+analysing results
+--
+inspect view
+inspect list
+inspect info
+inspect info <log-file-path>
+python analyze_results.py & edit the .eval file name in the script
+
+
+
+how to run inspect eval with different languages
+--
+change the system prompt string in 
+/opt/conda/envs/arena-env/lib/python3.11/site-packages/inspect_evals/agentharm/prompts.py
+
+change the loading of the query datasets In
+/opt/conda/envs/arena-env/lib/python3.11/site-packages/inspect_evals/agentharm/utils.py
+
+
+
+def load_dataset(
+    name: Literal["harmful", "benign", "chat"],
+    split: Literal["val", "test_public", "test_private"],
+    language: str = "en",  # Add language parameter with default
+) -> Dataset:
+    """
+    Load the AgentHarm dataset from Huggingface or cache.
+    Args:
+        name (str): Dataset name. Should be either "harmful" or "benign".
+        split (str): Split name. Should be either "val", "test_public", or "test_private".
+        language (str): Language code (en, de, fr, etc.). Defaults to "en".
+    Returns:
+        Dataset
+    """
+    # If English, use the standard Hugging Face download
+    if language == "en":
+        AGENTHARM_DATASET_LOCATION = (
+            Path(user_cache_dir("inspect_evals")) / "agentharm_dataset" / "AgentHarm"
+        )
+        AGENTHARM_DATASET_LOCATION.mkdir(parents=True, exist_ok=True)
+        try:
+            snapshot_download(
+                repo_id="ai-safety-institute/AgentHarm",
+                repo_type="dataset",
+                local_dir=AGENTHARM_DATASET_LOCATION,
+                allow_patterns="**/*.json",
+                resume_download=True,
+            )
+        except Exception as ex:
+            print(f"Error downloading dataset: {ex}")
+            shutil.rmtree(AGENTHARM_DATASET_LOCATION, ignore_errors=True)
+            raise ex
+    else:
+        # For non-English languages, use custom local path
+        AGENTHARM_DATASET_LOCATION = Path(f"/your/path/to/translated/datasets/{language}/AgentHarm")
+        
+        if not AGENTHARM_DATASET_LOCATION.exists():
+            raise ValueError(
+                f"Translated dataset for language '{language}' not found at {AGENTHARM_DATASET_LOCATION}. "
+                f"Please ensure your translated JSON files are in the correct location."
+            )
+    
+    # Rest of the function continues as before...
+    # (The code that actually reads from AGENTHARM_DATASET_LOCATION)
 

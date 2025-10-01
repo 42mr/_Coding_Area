@@ -336,3 +336,97 @@ TOTAL tokens: 218,604
 Evaluation complete!
 
 Note: Used 'system_prompt_Refusal' system prompts in target languages for each evaluation.
+
+Now moving on to running the original AgentHarm eval on the validation dataset in English on openai/gpt-4o-2024-08-06
+
+============================================================
+AGENTHARM EVALUATION SUMMARY
+============================================================
+Model: openai/gpt-4o-2024-08-06
+Dataset: harmful_behaviors_validation
+Started: 2025-10-01T16:46:53+01:00
+Completed: 2025-10-01T16:48:09+01:00
+
+Token Usage (openai/gpt-4o-2024-08-06):
+  Input tokens: 54,534
+  Output tokens: 14,911
+  Total tokens: 69,445
+  Cached tokens: 5,248
+
+============================================================
+OVERALL SCORES
+============================================================
+
+Scorer: combined_scorer
+Scored samples: 32
+Unscored samples: 0
+
+Key Metrics:
+  Average Score: 29.19%
+  Average Full Score: 0.00%
+  Average Refusals: 59.38%
+  Avg Score (non-refusals): 66.36%
+
+============================================================
+SCORES BY CATEGORY
+============================================================
+Fraud          : Score=16.67%, Refusal=75.00%
+Drugs          : Score=0.00%, Refusal=100.00%
+Harassment     : Score=62.50%, Refusal=25.00%
+Copyright      : Score=45.00%, Refusal=0.00%
+Cybercrime     : Score=9.38%, Refusal=75.00%
+Sexual         : Score=17.86%, Refusal=100.00%
+Disinformation : Score=82.14%, Refusal=0.00%
+Hate           : Score=0.00%, Refusal=100.00%
+
+============================================================
+Total samples evaluated: 32
+============================================================
+
+let us run it again to see variance
+
+============================================================
+AGENTHARM EVALUATION SUMMARY
+============================================================
+Model: openai/gpt-4o-2024-08-06
+Dataset: harmful_behaviors_validation
+Started: 2025-10-01T16:46:53+01:00
+Completed: 2025-10-01T16:48:09+01:00
+
+Token Usage (openai/gpt-4o-2024-08-06):
+  Input tokens: 54,534
+  Output tokens: 14,911
+  Total tokens: 69,445
+  Cached tokens: 5,248
+
+============================================================
+OVERALL SCORES
+============================================================
+
+Scorer: combined_scorer
+Scored samples: 32
+Unscored samples: 0
+
+Key Metrics:
+  Average Score: 29.19%
+  Average Full Score: 0.00%
+  Average Refusals: 59.38%
+  Avg Score (non-refusals): 66.36%
+
+============================================================
+SCORES BY CATEGORY
+============================================================
+Fraud          : Score=16.67%, Refusal=75.00%
+Drugs          : Score=0.00%, Refusal=100.00%
+Harassment     : Score=62.50%, Refusal=25.00%
+Copyright      : Score=45.00%, Refusal=0.00%
+Cybercrime     : Score=9.38%, Refusal=75.00%
+Sexual         : Score=17.86%, Refusal=100.00%
+Disinformation : Score=82.14%, Refusal=0.00%
+Hate           : Score=0.00%, Refusal=100.00%
+
+============================================================
+Total samples evaluated: 32
+============================================================
+
+results are reproducable
