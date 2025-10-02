@@ -1,3 +1,6 @@
+# agentharm.py
+from __future__ import annotations
+
 from typing import Any, Dict, Literal, Optional
 
 from inspect_ai import Task, task
@@ -15,6 +18,10 @@ from inspect_evals.agentharm.utils import (
     load_dataset,
     setup_tools_from_metadata,
 )
+from inspect_evals.agentharm.prompt_utils import set_active_language  # ensure prompts localize
+
+PromptTechnique = Literal["standard", "cot", "react", "refusal"]
+ToolChoice = Literal["forced_first", "auto", "none"]
 
 
 @task
@@ -22,41 +29,41 @@ def agentharm_benign(
     agent: str = "default",
     behavior_ids: list[str] = [],
     split: Literal["val", "test_private", "test_public"] = "test_public",
+    language: str = "en",
     detailed_behaviors: Optional[bool] = None,
     hint_included: Optional[bool] = None,
     n_irrelevant_tools: int = 0,
     refusal_judge: str = "openai/gpt-4o-2024-08-06",
     semantic_judge: str = "openai/gpt-4o-2024-08-06",
+
+    # First-class flags (no JSON blobs)
+    system_prompt_template: Optional[str] = "default",
+    prompt_technique: PromptTechnique = "standard",
+    # None => plain "{prompt}" (no jailbreak template)
+    user_prompt_template: Optional[str] = None,
+    tool_choice: ToolChoice = "auto",
+
+    # Back-compat: will be merged; explicit flags here win on conflict
     agent_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Task:
     """
-    AgentHarm benchmark task.
-
-    Args:
-        agent (str): The name of the solver to use for the agent. We provide a default agent if unspecified.
-        behavior_ids (list[str]): Behavior IDs to evaluate on (all by default).
-        split (Literal['val', 'test']): Split to evaluate on.
-        detailed_behaviors (Optional[bool]): If true, evaluate only on detailed behaviors. If false, evaluate only on open-ended behaviors.
-        hint_included (Optional[bool]): If true, evaluate only on hint-included behaviors. If false, evaluate only on hint-not-included behaviors.
-        n_irrelevant_tools (int): Number of irrelevant tools.
-        refusal_judge (str): Refusal judge model.
-        semantic_judge (str): Semantic judge model.
-        agent_kwargs: Additional arguments to pass to the agent. The kwargs for the default agent are:
-            - tool_choice (Literal['forced_first', 'auto', 'none']): The choice of tool to use. Default is 'auto'.
-            - user_prompt_template (str): Name of user prompt in `prompts.py`. Default is 'empty'.
-            - system_prompt_template (str): Name of system prompt in `prompts.py`. Default is None.
-            - prompt_technique (Literal['standard', 'cot', 'react', 'refusal']): Prompting technique to apply to the system prompt. Default is 'standard'.
+    AgentHarm benign benchmark task.
     """
     return run_agent_benchmark(
         agent=agent,
         behavior_ids=behavior_ids,
         task_name="benign",
         split=split,
+        language=language,
         detailed_behaviors=detailed_behaviors,
         hint_included=hint_included,
         n_irrelevant_tools=n_irrelevant_tools,
         refusal_judge=refusal_judge,
         semantic_judge=semantic_judge,
+        system_prompt_template=system_prompt_template,
+        prompt_technique=prompt_technique,
+        user_prompt_template=user_prompt_template,
+        tool_choice=tool_choice,
         agent_kwargs=agent_kwargs,
     )
 
@@ -66,43 +73,42 @@ def agentharm(
     agent: str = "default",
     behavior_ids: list[str] = [],
     split: Literal["val", "test_private", "test_public"] = "test_public",
+    language: str = "en",
     detailed_behaviors: Optional[bool] = None,
     hint_included: Optional[bool] = None,
     n_irrelevant_tools: int = 0,
     refusal_judge: str = "openai/gpt-4o-2024-08-06",
     semantic_judge: str = "openai/gpt-4o-2024-08-06",
+
+    # First-class flags (no JSON blobs)
+    system_prompt_template: Optional[str] = "default",
+    prompt_technique: PromptTechnique = "standard",
+    # None => plain "{prompt}" (no jailbreak template)
+    user_prompt_template: Optional[str] = None,
+    tool_choice: ToolChoice = "auto",
+
+    # Back-compat: will be merged; explicit flags here win on conflict
     agent_kwargs: Optional[Dict[str, Any]] = None,
     chat_dataset: Optional[bool] = False,
 ) -> Task:
     """
-    AgentHarm benchmark task.
-
-    Args:
-        agent (str): The name of the solver to use for the agent. We provide a default agent if unspecified.
-        behavior_ids (list[str]): Behavior IDs to evaluate on (all by default).
-        split (Literal['val', 'test']): Split to evaluate on.
-        detailed_behaviors (Optional[bool]): If true, evaluate only on detailed behaviors. If false, evaluate only on open-ended behaviors.
-        hint_included (Optional[bool]): If true, evaluate only on hint-included behaviors. If false, evaluate only on hint-not-included behaviors.
-        n_irrelevant_tools (int): Number of irrelevant tools.
-        refusal_judge (str): Refusal judge model.
-        semantic_judge (str): Semantic judge model.
-        agent_kwargs: Additional arguments to pass to the agent. The kwargs fro the default agent are:
-            - tool_choice (Literal['forced_first', 'auto', 'none']): The choice of tool to use. Default is 'auto'.
-            - user_prompt_template (str): Name of user prompt in `prompts.py`. Default is 'empty'.
-            - system_prompt_template (str): Name of system prompt in `prompts.py`. Default is None.
-            - prompt_technique (Literal['standard', 'cot', 'react', 'refusal']): Prompting technique to apply to the system prompt. Default is 'standard'.
-        chat_dataset (bool): If true, evaluate on the chat dataset.
+    AgentHarm harmful (or chat) benchmark task.
     """
     return run_agent_benchmark(
         agent=agent,
         behavior_ids=behavior_ids,
         task_name="harmful" if not chat_dataset else "chat",
         split=split,
+        language=language,
         detailed_behaviors=detailed_behaviors,
         hint_included=hint_included,
         n_irrelevant_tools=n_irrelevant_tools,
         refusal_judge=refusal_judge,
         semantic_judge=semantic_judge,
+        system_prompt_template=system_prompt_template,
+        prompt_technique=prompt_technique,
+        user_prompt_template=user_prompt_template,
+        tool_choice=tool_choice,
         agent_kwargs=agent_kwargs,
     )
 
@@ -112,38 +118,48 @@ def run_agent_benchmark(
     behavior_ids: list[str] = [],
     task_name: Literal["harmful", "benign", "chat"] = "harmful",
     split: Literal["val", "test_private", "test_public"] = "test_public",
+    language: str = "en",
     detailed_behaviors: Optional[bool] = None,
     hint_included: Optional[bool] = None,
     n_irrelevant_tools: int = 0,
     refusal_judge: str = "openai/gpt-4o-2024-08-06",
     semantic_judge: str = "openai/gpt-4o-2024-08-06",
+
+    # First-class flags (no JSON blobs)
+    system_prompt_template: Optional[str] = "default",
+    prompt_technique: PromptTechnique = "standard",
+    # None => plain "{prompt}" (no jailbreak template)
+    user_prompt_template: Optional[str] = None,
+    tool_choice: ToolChoice = "auto",
+
+    # Back-compat
     agent_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Task:
     """
-    Runs the AgentHarm benchmark task, both harmful and benign versions.
-
-    Args:
-        agent (str): Solver to use for the agent.
-        behavior_ids (list[str]): Behavior IDs to evaluate on (all by default).
-        task_name (str): Task name.
-        split (Literal['val', 'test']): Split to evaluate on.
-        dataset (Literal['harmful', 'benign']): Dataset name.
-        detailed_behaviors (Optional[bool]): If true, evaluate only on detailed behaviors. If false, evaluate only on open-ended behaviors.
-        hint_included (Optional[bool]): If true, evaluate only on hint-included behaviors. If false, evaluate only on hint-not-included behaviors.
-        n_irrelevant_tools (int): Number of irrelevant tools.
-        refusal_judge (str): Refusal judge model.
-        semantic_judge (str): Semantic judge model.
-        agent_kwargs: Additional arguments to pass to the agent. The kwargs fro the default agent are:
-            - tool_choice (Literal['forced_first', 'auto', 'none']): The choice of tool to use. Default is 'auto'.
-            - user_prompt_template (str): Name of user prompt in `prompts.py`. Default is 'empty'.
-            - system_prompt_template (str): Name of system prompt in `prompts.py`. Default is None.
-            - prompt_technique (Literal['standard', 'cot', 'react', 'refusal']): Prompting technique to apply to the system prompt. Default is 'standard'.
+    Runs the AgentHarm benchmark task (harmful, benign, or chat).
     """
-    dataset = load_dataset(task_name, split)
+    # Load dataset (already localized by `language`)
+    dataset = load_dataset(task_name, split, language)
     dataset = filter_dataset(dataset, behavior_ids, detailed_behaviors, hint_included)
     all_tool_names = get_benchmark_tools(task_name) if task_name != "chat" else []
 
-    agent_solver = get_agent(agent=agent, **agent_kwargs if agent_kwargs else {})
+    # Set active language for prompts (so agents don't need a 'language' arg)
+    set_active_language(language)
+
+    # Merge kwargs: start with any provided agent_kwargs, then overlay our flags (flags win)
+    merged_kwargs: Dict[str, Any] = {}
+    if agent_kwargs:
+        merged_kwargs.update(agent_kwargs)
+
+    merged_kwargs.update({
+        # Do NOT pass 'language' into the agent; many agents don't accept it.
+        "system_prompt_template": system_prompt_template,
+        "prompt_technique": prompt_technique,
+        "user_prompt_template": user_prompt_template,  # may be None => plain {prompt}
+        "tool_choice": tool_choice,
+    })
+
+    agent_solver = get_agent(agent=agent, **merged_kwargs)
 
     plan = [
         setup_tools_from_metadata(

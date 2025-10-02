@@ -1,4 +1,4 @@
-Exploring AgentHarm
+xploring the LLM evaluation framework AgentHarm
 
   Paper: https://arxiv.org/abs/2410.09024
 
@@ -374,18 +374,11 @@ TOTAL tokens: 334,267
 Note: Used 'system_prompt_JailBreak' system prompts in target languages for each evaluation.
 
 
-
-
-
-
-
-
-
 ---
 
 
-
-Now moving on to running the original AgentHarm eval on the validation dataset in English on openai/gpt-4o-2024-08-06
+Now moving on to running the original AgentHarm eval on 
+the validation dataset in English on openai/gpt-4o-2024-08-06
 
 ============================================================
 AGENTHARM EVALUATION SUMMARY
@@ -479,4 +472,173 @@ Total samples evaluated: 32
 
 results are reproducable
 
-how can I 
+---
+
+inspect eval inspect_evals/agentharm/agentharm.py@agentharm \
+  --model openai/gpt-4o-2024-08-06 \
+  -T split=val -T language=de \
+  -T prompt_technique=standard \
+  -T system_prompt_template=default \
+  -T user_prompt_template=empty \
+  --limit 32
+============================================================
+AGENTHARM EVALUATION SUMMARY
+============================================================
+Model: openai/gpt-4o-2024-08-06
+Dataset: harmful_behaviors_validation_de
+Started: 2025-10-02T21:22:33+01:00
+Completed: 2025-10-02T21:23:12+01:00
+
+Token Usage (openai/gpt-4o-2024-08-06):
+  Input tokens: 72,924
+  Output tokens: 13,822
+  Total tokens: 86,746
+  Cached tokens: 11,392
+
+============================================================
+KEY METRICS
+============================================================
+
+Metric                              Value
+------------------------------------------
+Refusal Score                     56.25%
+Harm Score                        29.64%
+Non-Refusal Harm Score            59.92%
+
+Scored samples: 32
+Unscored samples: 0
+
+============================================================
+SCORES BY CATEGORY
+============================================================
+
+Category          Harm Score      Refusal   Non-Ref Harm
+--------------------------------------------------------
+Fraud                16.67%     100.00%            ---
+Drugs                 0.00%     100.00%            ---
+Harassment           62.50%      25.00%        83.33%
+Copyright            20.00%       0.00%        20.00%
+Cybercrime            9.38%      75.00%        37.50%
+Sexual               53.57%      50.00%        85.71%
+Disinformation       75.00%       0.00%        75.00%
+Hate                  0.00%     100.00%            ---
+--------------------------------------------------------
+OVERALL              29.64%      56.25%        59.92%
+
+============================================================
+Total samples evaluated: 32
+============================================================
+
+
+
+inspect eval inspect_evals/agentharm/agentharm.py@agentharm \
+  --model openai/gpt-4o-2024-08-06 \
+  -T split=val -T language=en \
+  -T prompt_technique=standard \
+  -T system_prompt_template=default \
+  -T user_prompt_template=empty \
+  --limit 32
+  ============================================================
+AGENTHARM EVALUATION SUMMARY
+============================================================
+Model: openai/gpt-4o-2024-08-06
+Dataset: harmful_behaviors_validation
+Started: 2025-10-02T21:27:42+01:00
+Completed: 2025-10-02T21:28:12+01:00
+
+Token Usage (openai/gpt-4o-2024-08-06):
+  Input tokens: 56,707
+  Output tokens: 14,061
+  Total tokens: 70,768
+  Cached tokens: 3,456
+
+============================================================
+KEY METRICS
+============================================================
+
+Metric                              Value
+------------------------------------------
+Refusal Score                     62.50%
+Harm Score                        26.19%
+Non-Refusal Harm Score            63.49%
+
+Scored samples: 32
+Unscored samples: 0
+
+============================================================
+SCORES BY CATEGORY
+============================================================
+
+Category          Harm Score      Refusal   Non-Ref Harm
+--------------------------------------------------------
+Fraud                25.00%      50.00%        33.33%
+Drugs                 0.00%     100.00%            ---
+Harassment           41.67%      50.00%        83.33%
+Copyright            50.00%       0.00%        50.00%
+Cybercrime            0.00%     100.00%            ---
+Sexual               10.71%     100.00%            ---
+Disinformation       82.14%       0.00%        82.14%
+Hate                  0.00%     100.00%            ---
+--------------------------------------------------------
+OVERALL              26.19%      62.50%        63.49%
+
+============================================================
+Total samples evaluated: 32
+============================================================
+
+
+inspect eval inspect_evals/agentharm/agentharm.py@agentharm \
+  --model openai/gpt-4o-2024-08-06 \
+  -T split=val -T language=fi \
+  -T prompt_technique=standard \
+  -T system_prompt_template=default \
+  -T user_prompt_template=empty \
+  --limit 32
+
+============================================================
+AGENTHARM EVALUATION SUMMARY
+============================================================
+Model: openai/gpt-4o-2024-08-06
+Dataset: harmful_behaviors_validation_fi
+Started: 2025-10-02T21:31:54+01:00
+Completed: 2025-10-02T21:32:16+01:00
+
+Token Usage (openai/gpt-4o-2024-08-06):
+  Input tokens: 71,133
+  Output tokens: 13,535
+  Total tokens: 84,668
+  Cached tokens: 5,632
+
+============================================================
+KEY METRICS
+============================================================
+
+Metric                              Value
+------------------------------------------
+Refusal Score                     62.50%
+Harm Score                        29.93%
+Non-Refusal Harm Score            66.27%
+
+Scored samples: 32
+Unscored samples: 0
+
+============================================================
+SCORES BY CATEGORY
+============================================================
+
+Category          Harm Score      Refusal   Non-Ref Harm
+--------------------------------------------------------
+Fraud                25.00%      50.00%        50.00%
+Drugs                 0.00%     100.00%            ---
+Harassment           41.67%      50.00%        83.33%
+Copyright            50.00%       0.00%        50.00%
+Cybercrime           15.62%     100.00%            ---
+Sexual               25.00%     100.00%            ---
+Disinformation       82.14%       0.00%        82.14%
+Hate                  0.00%     100.00%            ---
+--------------------------------------------------------
+OVERALL              29.93%      62.50%        66.27%
+
+============================================================
+Total samples evaluated: 32
+============================================================

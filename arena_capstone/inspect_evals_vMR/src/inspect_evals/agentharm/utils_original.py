@@ -1,5 +1,3 @@
-# utils.py
-
 import json
 import logging
 import os
@@ -24,7 +22,6 @@ logger = logging.getLogger(__name__)
 def load_dataset(
     name: Literal["harmful", "benign", "chat"],
     split: Literal["val", "test_public", "test_private"],
-    language: str = "en",  # NEW PARAMETER
 ) -> Dataset:
     """
     Load the AgentHarm dataset from Huggingface or cache.
@@ -32,102 +29,65 @@ def load_dataset(
     Args:
         name (str): Dataset name. Should be either "harmful" or "benign".
         split (str): Split name. Should be either "val", "test_public", or "test_private".
-        language (str): Language code (en, de, fr, etc.). Defaults to "en".
 
     Returns:
         Dataset
     """
-    # Define custom dataset locations for translated versions
-    TRANSLATED_DATASETS_BASE = Path.home() / "arena_capstone/arena_capstone/agentharm-project/prompt_data"
-    
-    if language == "en":
-        # Original English: download from Hugging Face
-        AGENTHARM_DATASET_LOCATION = (
-            Path(user_cache_dir("inspect_evals")) / "agentharm_dataset" / "AgentHarm"
+    AGENTHARM_DATASET_LOCATION = (
+        Path(user_cache_dir("inspect_evals")) / "agentharm_dataset" / "AgentHarm"
+    )
+    AGENTHARM_DATASET_LOCATION.mkdir(parents=True, exist_ok=True)
+    try:
+        snapshot_download(
+            repo_id="ai-safety-institute/AgentHarm",
+            repo_type="dataset",
+            local_dir=AGENTHARM_DATASET_LOCATION,
+            allow_patterns="**/*.json",
+            resume_download=True,
         )
-        AGENTHARM_DATASET_LOCATION.mkdir(parents=True, exist_ok=True)
-        try:
-            snapshot_download(
-                repo_id="ai-safety-institute/AgentHarm",
-                repo_type="dataset",
-                local_dir=AGENTHARM_DATASET_LOCATION,
-                allow_patterns="**/*.json",
-                resume_download=True,
-            )
-        except Exception as ex:
-            print(f"Error downloading dataset: {ex}")
-            shutil.rmtree(AGENTHARM_DATASET_LOCATION, ignore_errors=True)
-            raise ex
-    else:
-        # Translated versions: use local files
-        AGENTHARM_DATASET_LOCATION = TRANSLATED_DATASETS_BASE
-        if not AGENTHARM_DATASET_LOCATION.exists():
-            raise ValueError(
-                f"Translated dataset directory not found at {AGENTHARM_DATASET_LOCATION}"
-            )
-    
-    if language == "en":
-        split_dict = {
-            "harmful": {
-                "val": "benchmark/harmful_behaviors_validation.json",
-                "test_public": "benchmark/harmful_behaviors_test_public.json",
-                "test_private": "benchmark/harmful_behaviors_test_private.json",
-            },
-            "benign": {
-                "val": "benchmark/benign_behaviors_validation.json",
-                "test_public": "benchmark/benign_behaviors_test_public.json",
-                "test_private": "benchmark/benign_behaviors_test_private.json",
-            },
-            "chat": {
-                "val": "benchmark/chat_validation.json",
-                "test_public": "benchmark/chat_public_test.json",
-                "test_private": "benchmark/chat_private_test.json",
-            },
-        }
-    else:
-        # CHANGED: Use harmful_behaviors_* pattern to match your filenames
-        split_dict = {
-            "harmful": {
-                "val": f"harmful_behaviors_validation_{language}.json",
-                "test_public": f"harmful_behaviors_test_public_{language}.json",
-                "test_private": f"harmful_behaviors_test_private_{language}.json",
-            },
-            "benign": {
-                "val": f"benign_behaviors_validation_{language}.json",
-                "test_public": f"benign_behaviors_test_public_{language}.json",
-                "test_private": f"benign_behaviors_test_private_{language}.json",
-            },
-            "chat": {
-                "val": f"chat_validation_{language}.json",
-                "test_public": f"chat_public_test_{language}.json",
-                "test_private": f"chat_private_test_{language}.json",
-            },
-        }
+    except Exception as ex:
+        print(f"Error downloading dataset: {ex}")
+        shutil.rmtree(AGENTHARM_DATASET_LOCATION, ignore_errors=True)
+        raise ex
+
+    split_dict = {
+        "harmful": {
+            "val": "benchmark/harmful_behaviors_validation.json",
+            "test_public": "benchmark/harmful_behaviors_test_public.json",
+            "test_private": "benchmark/harmful_behaviors_test_private.json",
+        },
+        "benign": {
+            "val": "benchmark/benign_behaviors_validation.json",
+            "test_public": "benchmark/benign_behaviors_test_public.json",
+            "test_private": "benchmark/benign_behaviors_test_private.json",
+        },
+        "chat": {
+            "val": "benchmark/chat_validation.json",
+            "test_public": "benchmark/chat_public_test.json",
+            "test_private": "benchmark/chat_private_test.json",
+        },
+    }
 
     if name not in split_dict:
         raise ValueError(f"Dataset {name} is not available.")
-    
     if split not in split_dict[name]:
         raise ValueError(f"Split {split} is not available.")
 
-    # Read the dataset file
-    dataset_file = AGENTHARM_DATASET_LOCATION / split_dict[name][split]
-    
-    if not dataset_file.exists():
-        raise FileNotFoundError(
-            f"Dataset file not found: {dataset_file}\n"
-            f"Expected path for language '{language}', name '{name}', split '{split}'"
-        )
+    input_json_file = AGENTHARM_DATASET_LOCATION / split_dict[name][split]
+
+    # Verify the file exists
+    if not input_json_file.exists():
+        raise FileNotFoundError(f"File not found: {input_json_file}")
 
     # Read the JSON file
-    with open(dataset_file, "r") as json_file:
+    with open(input_json_file, "r") as json_file:
         data = json.load(json_file)
-    
+
     # Write to the JSONL file
-    output_jsonl_file = dataset_file.with_suffix(".jsonl")
+    output_jsonl_file = input_json_file.with_suffix(".jsonl")
     with open(output_jsonl_file, "w") as jsonl_file:
         jsonl_file.writelines(json.dumps(record) + "\n" for record in data["behaviors"])
-    
+
     dataset = json_dataset(
         str(output_jsonl_file),
         FieldSpec(
@@ -146,6 +106,9 @@ def load_dataset(
             ],
         ),
     )
+
+    os.remove(output_jsonl_file)
+
     return dataset
 
 

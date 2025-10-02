@@ -25,16 +25,50 @@ eval_transl_for_refusal_using_llmjudge_WSP.py
   # Run with Refusal-focused prompt
   python eval_transl_for_refusal_using_llmjudge_WSP.py --prompt-type system_prompt_Refusal
 
+  python eval_transl_for_refusal_using_llmjudge_WSP.py --prompt-type system_prompt_JailBreak
 
-command line to run eval on validation dataset
 --
-inspect eval inspect_evals/agentharm --model openai/gpt-4o-2024-08-06 -T split=val
-inspect eval inspect_evals/agentharm --model openai/gpt-4o-2024-08-06 -T split=test
+command line to run eval on validation dataset with multilingual prompts and system-prompts
+--
 
-inspect eval inspect_evals/agentharm \
-     --model openai/gpt-4o-2024-08-06 \
-     -T split=test_public \
-     --limit 10
+need to navigate to src directory!
+
+cd ~/arena_capstone/arena_capstone/inspect_evals_vMR/src/
+
+inspect eval inspect_evals/agentharm/agentharm.py@agentharm \
+  --model openai/gpt-4o-2024-08-06 \
+  -T split=val -T language=fi \
+  -T prompt_technique=standard \
+  -T system_prompt_template=default \
+  -T user_prompt_template=empty \
+  --limit 32
+
+inspect eval inspect_evals/agentharm/agentharm.py@agentharm \
+  --model openai/gpt-4o-2024-08-06 \
+  -T split=val -T language=de \
+  -T prompt_technique=cot \
+  --limit 1
+
+Glossary for calls
+
+  system_promot_template
+  -T system_prompt_template=default
+
+  prompt_technique
+  -T prompt_technique=standard
+  -T prompt_technique=cot
+  -T prompt_technique=react
+  -T prompt_technique=refusal
+
+  user_prompt_technique
+  no flag = no jailbreak # plain prompt
+  -T user_prompt_template=empty # plain prompt
+  -T user_prompt_template=jailbreak # inserts jailbreak text
+
+  tool_choice # ignore for now
+  -T tool_choice=none
+
+
 
 analysing results
 --
@@ -53,51 +87,3 @@ change the system prompt string in
 
 change the loading of the query datasets In
 /opt/conda/envs/arena-env/lib/python3.11/site-packages/inspect_evals/agentharm/utils.py
-
-
-
-def load_dataset(
-    name: Literal["harmful", "benign", "chat"],
-    split: Literal["val", "test_public", "test_private"],
-    language: str = "en",  # Add language parameter with default
-) -> Dataset:
-    """
-    Load the AgentHarm dataset from Huggingface or cache.
-    Args:
-        name (str): Dataset name. Should be either "harmful" or "benign".
-        split (str): Split name. Should be either "val", "test_public", or "test_private".
-        language (str): Language code (en, de, fr, etc.). Defaults to "en".
-    Returns:
-        Dataset
-    """
-    # If English, use the standard Hugging Face download
-    if language == "en":
-        AGENTHARM_DATASET_LOCATION = (
-            Path(user_cache_dir("inspect_evals")) / "agentharm_dataset" / "AgentHarm"
-        )
-        AGENTHARM_DATASET_LOCATION.mkdir(parents=True, exist_ok=True)
-        try:
-            snapshot_download(
-                repo_id="ai-safety-institute/AgentHarm",
-                repo_type="dataset",
-                local_dir=AGENTHARM_DATASET_LOCATION,
-                allow_patterns="**/*.json",
-                resume_download=True,
-            )
-        except Exception as ex:
-            print(f"Error downloading dataset: {ex}")
-            shutil.rmtree(AGENTHARM_DATASET_LOCATION, ignore_errors=True)
-            raise ex
-    else:
-        # For non-English languages, use custom local path
-        AGENTHARM_DATASET_LOCATION = Path(f"/your/path/to/translated/datasets/{language}/AgentHarm")
-        
-        if not AGENTHARM_DATASET_LOCATION.exists():
-            raise ValueError(
-                f"Translated dataset for language '{language}' not found at {AGENTHARM_DATASET_LOCATION}. "
-                f"Please ensure your translated JSON files are in the correct location."
-            )
-    
-    # Rest of the function continues as before...
-    # (The code that actually reads from AGENTHARM_DATASET_LOCATION)
-
