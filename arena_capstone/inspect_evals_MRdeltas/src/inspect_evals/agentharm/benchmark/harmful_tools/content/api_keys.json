@@ -1,6 +1,0 @@
-{
-    "aws_access_key_id": "REMOVED_SECRET_KEY1",
-    "aws_secret_access_key": "REMOVED_SECRET_KEY2",
-    "stripe_secret_key": "sREMOVED_SECRET_KEY3",
-    "github_personal_access_token": "REMOVED_SECRET_KEY4"
-}
