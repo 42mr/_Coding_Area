@@ -53,7 +53,7 @@ def load_system_prompts(filepath='./prompt_data/system_prompts_all.json', prompt
     Args:
         filepath: Path to system prompts JSON file
         prompt_type: Which prompt variant to use (e.g., 'system_prompt', 'system_prompt_Chain_of_Thought', 
-                     'system_prompt_ReAct', 'system_prompt_Refusal')
+                     'system_prompt_ReAct', 'system_prompt_Refusal', 'system_prompt_JailBreak')
     """
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -195,7 +195,7 @@ def main():
     ap.add_argument("--system-prompts", default="./prompt_data/system_prompts_all.json", 
                     help="JSON file containing system prompts for all languages")
     ap.add_argument("--prompt-type", default="system_prompt",
-                    choices=['system_prompt', 'system_prompt_Chain_of_Thought', 'system_prompt_ReAct', 'system_prompt_Refusal'],
+                    choices=['system_prompt', 'system_prompt_Chain_of_Thought', 'system_prompt_ReAct', 'system_prompt_Refusal', 'system_prompt_JailBreak'],
                     help="Which system prompt variant to use")
     ap.add_argument("--sleep", type=float, default=0.5, help="Sleep seconds between prompt evaluations")
     ap.add_argument("--no-generate", action="store_true",
