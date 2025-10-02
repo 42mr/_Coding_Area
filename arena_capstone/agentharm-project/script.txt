@@ -1,6 +1,10 @@
 
 set-up the environment
 --
+conda evn list
+conda activate my_project_env
+conda install deepl
+
 
 pip install inspect-ai
 pip install git+https://github.com/UKGovernmentBEIS/inspect_evals
