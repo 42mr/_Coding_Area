@@ -37,7 +37,7 @@ cd ~/arena_capstone/arena_capstone/inspect_evals_vMR/src/
 
 inspect eval inspect_evals/agentharm/agentharm.py@agentharm \
   --model openai/gpt-4o-2024-08-06 \
-  -T split=val -T language=fi \
+  -T split=val -T language=zh \
   -T prompt_technique=standard \
   -T system_prompt_template=default \
   -T user_prompt_template=empty \
@@ -79,11 +79,6 @@ inspect info <log-file-path>
 python analyze_results.py & edit the .eval file name in the script
 
 
+ I if inspect framework's view server is stuck here the troubleshooting steps:
 
-how to run inspect eval with different languages
---
-change the system prompt string in 
-/opt/conda/envs/arena-env/lib/python3.11/site-packages/inspect_evals/agentharm/prompts.py
-
-change the loading of the query datasets In
-/opt/conda/envs/arena-env/lib/python3.11/site-packages/inspect_evals/agentharm/utils.py
+try new port inspect view --port 7576
